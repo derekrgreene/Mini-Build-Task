@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <title>{{ title }}</title>
+</head>
+<body>
+  <header>
+    <h1>Pediatric Therapy Group</h1>
+  </header>
+  <main>
+    {% if error %}
+      <div class="error-message">
+        {{ error }}
+      </div>
+    {% endif %} 
+    {% block content %}{% endblock %}
+  </main>
+  <footer>
+    <p>© 2025 Pediatric Therapy Group</p>
+  </footer>
+</body>
+</html>

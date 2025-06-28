@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<form method="post">
+    <label>First Name: <input type="text" name="first_name" required></label><br>
+    <label>Last Name: <input type="text" name="last_name" required></label><br>
+    <label>Date of Birth: <input type="date" name="date_of_birth" required></label><br>
+    <label>Therapist Name: <input type="text" name="therapist_name" required></label><br>
+    <button type="submit">Submit</button>
+</form>
+{% endblock %}
