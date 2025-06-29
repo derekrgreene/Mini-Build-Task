@@ -12,4 +12,4 @@ To refactor this application to store files in S3, I would configure an S3 bucke
 
 ### 3. How would you link this to a Patient model in a real application?
 
-In a real application, I would link this to a patient model by defining a patients table in a databas and store each submission as a new patient record with the therpaist name, patient name, and file URL.
+In a real application, I would link this to a patient model by defining a patients table in a database and store each submission as a new patient record with the therpaist name, patient name, and file URL.
