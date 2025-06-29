@@ -3,54 +3,61 @@ Author: Derek R. Greene
 Email: derek@derekrgreene.com
 
 Description:
-    Simple Flask application to process form with fields: first_name, last_name, DOB, 
-    therapist_name. Validates that all fields are entered and DOB not in the future. 
-    Upon successful submission fields are saved to SQlite database and a confirmation
-    page is displayed with the entered info. 
+    Simple Flask application to process form with fields: therapist_name, patient_name, file. 
+    Validates that all fields are entered and uploaded file is a .pdf.
+    Upon successful submission the file is saved locally to the /uploads directory with the name format
+    therapistName_patientName_timeStamp.pdf and a confirmation page is rendered displaying the 
+    entered information, new file name, and a link to download the file.
 '''
 
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, send_from_directory
+from werkzeug.utils import secure_filename
 from datetime import datetime, date
-import sqlite3
+import os
 
 app = Flask(__name__)
-DB_PATH = 'db/PHI.db'
+app.config['UPLOAD_FOLDER'] = 'uploads'
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 
 @app.route('/submit', methods=['GET', 'POST'])
 def submit():
     '''
-    Method to process/validate form data and store in SQlite database
+    Method to process/validate form data and uploaded file (must be a pdf)
     '''
 
     if request.method == 'POST':
-        first = request.form['first_name']
-        last = request.form['last_name']
-        dob = request.form['date_of_birth']
-        therapist = request.form['therapist_name']
+        therapist = "".join(request.form['therapist_name'].split()).replace(" ", "")
+        patient = "".join(request.form['patient_name'].split()).replace(" ", "")
+        pdf = request.files.get('file')
 
         error = None
-        dob_date = datetime.strptime(dob, "%Y-%m-%d").date()
-        if dob_date > date.today():
-            error = "Date of Birth cannot be in the future!"
-            return render_template('form.html', title="Patient Form",
-                                   error=error, max_date=date.today().isoformat(),
-                                   first_name=first, last_name=last, dob=dob, therapist=therapist)
+        header = pdf.read(4)
+        pdf.seek(0)
 
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute(
-                '''INSERT INTO patients (
-                    first_name, last_name, date_of_birth, therapist_name)
-                    VALUES (?, ?, ?, ?)''', (first, last, dob, therapist)
-        )
-        conn.commit()
-        conn.close()
+        if not header == b'%PDF':
+            error = "Error: File must be a PDF!"
+            return render_template('form.html', title="Error",
+                                   error=error)
+
+        timestamp = datetime.now().strftime("%Y%m%d%")
+        unsecure_filename = f"{therapist}_{patient}_{timestamp}.pdf"
+        filename = secure_filename(unsecure_filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        pdf.save(filepath)
 
         return render_template('confirmation.html', title="Successful Submission",
-                            first_name=first, last_name=last, dob=dob, therapist=therapist)
+                            therapist=therapist, patient=patient, filename=filename)
 
-    return render_template('form.html', title="Patient Form", max_date=date.today().isoformat())
+    return render_template('form.html', title="Patient Form")
+
+
+@app.route('/uploads/<filename>')
+def download_pdf(filename):
+    '''
+    Method to return url to download the uploaded file
+    '''
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
 
 
 if __name__ == '__main__':
